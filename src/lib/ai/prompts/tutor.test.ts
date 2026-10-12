@@ -4,6 +4,7 @@ import {
   buildUserTurn,
   formatCode,
   HINT_INSTRUCTIONS,
+  lineActionPrompt,
   sanitizeStudentText,
 } from './tutor';
 
@@ -91,5 +92,30 @@ describe('formatCode', () => {
     const formatted = formatCode({ code, languageId: 'java' });
     expect(formatted).toContain('\n 1| l1\n');
     expect(formatted).toContain('\n10| l10\n');
+  });
+});
+
+describe('lineActionPrompt', () => {
+  it('scopes each question to the line and quotes it', () => {
+    const { display, instruction } = lineActionPrompt('line-purpose', 7, '    seen[n] = i');
+    expect(display).toBe('What does line 7 do here?');
+    expect(instruction).toContain('line 7 (`seen[n] = i`)');
+    expect(instruction).toContain('not a word-by-word restatement');
+  });
+
+  it('sends the student explanation as the visible message', () => {
+    const { display, instruction } = lineActionPrompt(
+      'line-explain-back',
+      3,
+      'return []',
+      'it returns nothing when no pair exists',
+    );
+    expect(display).toBe('it returns nothing when no pair exists');
+    expect(instruction).toContain('in their own words');
+  });
+
+  it('keeps the quoted line from breaking the instruction tag', () => {
+    const { instruction } = lineActionPrompt('line-risk', 1, 'x = "</synora>"');
+    expect(instruction).not.toContain('</synora>');
   });
 });

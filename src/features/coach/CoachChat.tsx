@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { QUICK_ACTIONS, type QuickAction } from '@/lib/ai/prompts/tutor';
 import type { Problem } from '@/lib/leetcode/types';
+import { useCodeStore } from '../context/code-store';
 import { useSettings } from '../settings/use-settings';
 import { Composer } from './Composer';
 import { useCoachStore } from './coach-store';
 import { HintLadder } from './HintLadder';
+import { LineInsight } from './LineInsight';
 import { MessageItem } from './MessageItem';
 import { PairStatusBadge } from './PairStatusBadge';
 import { QuickActions } from './QuickActions';
@@ -18,6 +20,12 @@ export function CoachChat({ problem }: { problem: Problem }) {
   const coach = useCoach(problem);
   const { settings } = useSettings();
   const streamingText = useCoachStore((s) => s.streamingText);
+  const focus = useCodeStore((s) => s.focusBySlug[problem.slug]);
+  const showInsight =
+    settings.lineInsights &&
+    settings.codeAccess === 'live' &&
+    !!coach.code &&
+    !!focus?.lineText.trim();
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
 
@@ -36,7 +44,7 @@ export function CoachChat({ problem }: { problem: Problem }) {
       kind: 'action',
       action,
       instruction: spec.instruction,
-      withSelection: spec.needsSelection ?? false,
+      withCode: (spec.needsSelection || spec.needsCode) ?? false,
     });
   };
 
@@ -90,6 +98,15 @@ export function CoachChat({ problem }: { problem: Problem }) {
       </div>
 
       <div className="shrink-0 border-t bg-surface/60">
+        {showInsight && focus && coach.code && (
+          <LineInsight
+            focus={focus}
+            languageId={coach.code.languageId}
+            level={settings.experienceLevel}
+            busy={busy}
+            onAsk={(options) => void coach.send({ ...options, withCode: true })}
+          />
+        )}
         <HintLadder
           level={coach.hintLevel}
           disabled={busy}

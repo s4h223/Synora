@@ -11,6 +11,7 @@ function fakeEditor(initial: string, languageId = 'python') {
   let value = initial;
   let focused = false;
   const listeners: Record<string, Listener[]> = { content: [], cursor: [], model: [] };
+  let mouse: ((e: unknown) => void) | null = null;
   const on = (key: string) => (cb: Listener) => {
     listeners[key]!.push(cb);
     return { dispose: () => (listeners[key] = listeners[key]!.filter((l) => l !== cb)) };
@@ -21,6 +22,8 @@ function fakeEditor(initial: string, languageId = 'python') {
     getLanguageId: () => languageId,
     getLineCount: () => value.split('\n').length,
     getLineMaxColumn: () => 10,
+    getLineContent: (n: number) => value.split('\n')[n - 1] ?? '',
+    getWordAtPosition: () => ({ word: 'enumerate' }),
   };
   const editor = {
     getModel: () => model,
@@ -30,6 +33,10 @@ function fakeEditor(initial: string, languageId = 'python') {
     onDidChangeModelContent: on('content'),
     onDidChangeCursorSelection: on('cursor'),
     onDidChangeModel: on('model'),
+    onMouseMove: (cb: (e: unknown) => void) => {
+      mouse = cb;
+      return { dispose: () => (mouse = null) };
+    },
     revealLineInCenter: vi.fn(),
     setSelection: vi.fn(),
     focus: vi.fn(),
@@ -42,6 +49,9 @@ function fakeEditor(initial: string, languageId = 'python') {
     },
     focus() {
       focused = true;
+    },
+    hover(lineNumber: number) {
+      mouse?.({ target: { position: { lineNumber, column: 5 } } });
     },
     listenerCount: () => Object.values(listeners).reduce((n, l) => n + l.length, 0),
   };
@@ -121,6 +131,33 @@ describe('installMonacoWatcher', () => {
     install(fakeEditor('a'.repeat(50)));
     installMonacoWatcher(LIVE_MARKER, 10, 100);
     expect(posted[0]).toMatchObject({ snapshot: { code: 'a'.repeat(10), truncated: true } });
+  });
+});
+
+describe('hover reporting', () => {
+  it('reports the hovered line after the pointer rests', () => {
+    const code = fakeEditor('a = 1\nfor i, n in enumerate(nums):');
+    install(code);
+    installMonacoWatcher(LIVE_MARKER, 1000, 100, 450, 500);
+    posted = [];
+
+    code.hover(1);
+    vi.advanceTimersByTime(200);
+    code.hover(2); // moved before the dwell elapsed
+    vi.advanceTimersByTime(449);
+    expect(posted).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(posted).toEqual([
+      {
+        [LIVE_MARKER]: true,
+        hover: { line: 2, lineText: 'for i, n in enumerate(nums):', word: 'enumerate' },
+      },
+    ]);
+
+    // Resting on the same line/word again doesn't re-post.
+    code.hover(2);
+    vi.advanceTimersByTime(500);
+    expect(posted).toHaveLength(1);
   });
 });
 

@@ -30,6 +30,7 @@ Some free-tier AI providers may use submitted data, including code, to improve t
 - A small script is present on `leetcode.com` pages (except contests) so Synora notices when you open a problem. It only reads content on `/problems/*` pages, and only when the side panel asks.
 - Problem details (title, description, tags) are fetched from LeetCode's own API, from within the LeetCode page.
 - Your editor code is read only according to your **Editor code access** setting: *Off*, *Ask* (only when you click "Read from editor"), or *Live* (follows your editor as you type, entirely inside your browser).
+- In Live mode, Synora also notes which line your mouse rests on, to show Line Insights. This stays in your browser; the line is only sent to your AI provider if you click one of its questions.
 - **Pair mode** (off by default) sends your current code to your AI provider when you pause typing, so it can point out problems without being asked. It's limited to at most one check every 30–60 seconds.
 
 ## What Synora never does

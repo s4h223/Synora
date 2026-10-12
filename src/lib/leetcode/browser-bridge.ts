@@ -2,8 +2,10 @@ import { z } from 'zod/mini';
 import type { ProblemResolverDeps } from './active-problem';
 import { type EditorReadResult, MAX_CODE_CHARS, readMonacoInPage } from './editor';
 import {
+  HOVER_DWELL_MS,
   installMonacoWatcher,
   LIVE_MARKER,
+  MAX_LINE_CHARS,
   MAX_SELECTION_CHARS,
   revealLineInPage,
   uninstallMonacoWatcher,
@@ -63,7 +65,7 @@ export async function startLiveSync(tabId: number): Promise<LiveSyncStatus> {
       target: { tabId },
       world: 'MAIN',
       func: installMonacoWatcher,
-      args: [LIVE_MARKER, MAX_CODE_CHARS, MAX_SELECTION_CHARS],
+      args: [LIVE_MARKER, MAX_CODE_CHARS, MAX_SELECTION_CHARS, HOVER_DWELL_MS, MAX_LINE_CHARS],
     });
     const status = injection?.result;
     return status === 'installed' || status === 'already-installed' || status === 'no-editor'

@@ -63,6 +63,7 @@ export function SettingsView() {
   const { settings, update } = useSettings();
   const section = useUiStore((s) => s.settingsSection);
   const trackingId = useId();
+  const insightsId = useId();
 
   useEffect(() => {
     if (section) document.getElementById(`settings-${section}`)?.scrollIntoView({ block: 'start' });
@@ -107,6 +108,22 @@ export function SettingsView() {
                     : { pairMode },
                 )
               }
+            />
+          }
+        />
+        <Row
+          label="Line Insights"
+          labelFor={insightsId}
+          help={
+            settings.codeAccess === 'live'
+              ? 'Hover a line (or move your cursor to it) to see what its built-ins do, possible pitfalls, and questions you can ask about it.'
+              : 'Line Insights need Live code access.'
+          }
+          control={
+            <Switch
+              id={insightsId}
+              checked={settings.lineInsights}
+              onCheckedChange={(lineInsights) => void update({ lineInsights })}
             />
           }
         />

@@ -88,6 +88,16 @@ Validation uses `zod/mini` (tree-shakeable), which took the content script from 
 - With code access set to **Live**, the side panel injects a MAIN-world watcher that subscribes to Monaco's content/cursor/model events and posts debounced snapshots (code, language, cursor line, selection). The content script validates and relays them to the panel. Nothing is polled; nothing leaves the browser until an AI request.
 - **Pair mode** (`quiet` / `active`) runs a one-shot check when the student pauses (5–8 s), at most every 30–60 s, only if the code changed meaningfully since the last check and differs from LeetCode's starter template. The model must answer with a small JSON verdict; silence is the expected default. Policy logic is pure (`pair-trigger.ts`).
 
+### Line Insights
+
+The Live watcher also reports where the mouse rests (450 ms dwell, deduped by line + word) and the panel tracks cursor-line changes. The focused line drives a compact card in the Coach dock:
+
+1. **Offline reference** (`src/lib/learning/glossary.ts`): curated entries for built-ins and syntax, matched on identifiers/method calls with strings and comments stripped; the hovered word ranks first. Instant, free, no AI.
+2. **Pitfalls** (`pitfalls.ts`): a small set of high-precision rules; every rule has negative tests so it doesn't misfire on correct code.
+3. **Line questions** (`lineActionPrompt`): purpose-in-context, value trace, risky inputs, explain-every-part, and "Explain it back".
+
+Design rationale from CS-education research: students request line-by-line explanations most but rate summary-style explanations as more helpful (Denny et al., SIGCSE 2023), so "What does this line do?" asks for the line's role rather than a restatement; self-explanation prompts improve learning, especially for low-prior-knowledge students, and transfer best when combined with hints (Marwan et al., ICER 2019; Oli et al., 2024), hence "Explain it back"; many novice errors stem from an inaccurate model of execution (the notional machine), hence value tracing.
+
 ### Verified vs. unverified
 Challenge results carry one of three labels: **verified failure** (executed and compared against a trusted reference), **candidate test**, or **reasoning challenge**. Expected outputs come only from curated reference solutions, never from an AI model.
 

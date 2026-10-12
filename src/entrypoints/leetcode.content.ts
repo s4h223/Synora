@@ -1,6 +1,12 @@
 import { extractProblemFromDom } from '@/lib/leetcode/dom';
 import { fetchQuestion, LeetCodeApiError, readCsrfToken } from '@/lib/leetcode/graphql';
-import { LIVE_MARKER, type LiveCodeMessage, liveSnapshotSchema } from '@/lib/leetcode/live-sync';
+import {
+  LIVE_MARKER,
+  type LiveCodeMessage,
+  type LiveHoverMessage,
+  liveHoverSchema,
+  liveSnapshotSchema,
+} from '@/lib/leetcode/live-sync';
 import type { ContentRequest, GetProblemResponse, Problem } from '@/lib/leetcode/types';
 import { classifyUrl } from '@/lib/leetcode/url';
 
@@ -29,16 +35,18 @@ export default defineContentScript({
       if (data?.[LIVE_MARKER] !== true) return;
 
       const info = classifyUrl(location.href);
-      const parsed = liveSnapshotSchema.safeParse(data.snapshot);
-      if (info.kind !== 'problem' || !parsed.success) return;
+      if (info.kind !== 'problem') return;
 
-      const message: LiveCodeMessage = {
-        type: 'synora:live-code',
-        slug: info.slug,
-        snapshot: parsed.data,
-      };
+      let message: LiveCodeMessage | LiveHoverMessage | null = null;
+      const snapshot = liveSnapshotSchema.safeParse(data.snapshot);
+      const hover = liveHoverSchema.safeParse(data.hover);
+      if (snapshot.success) {
+        message = { type: 'synora:live-code', slug: info.slug, snapshot: snapshot.data };
+      } else if (hover.success) {
+        message = { type: 'synora:live-hover', slug: info.slug, hover: hover.data };
+      }
       // Rejects when the side panel is closed; that's fine.
-      browser.runtime.sendMessage(message).catch(() => {});
+      if (message) browser.runtime.sendMessage(message).catch(() => {});
     });
   },
 });

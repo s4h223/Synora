@@ -1,7 +1,12 @@
 import { AlertTriangle, Code2, Lightbulb, RotateCcw, ShieldAlert, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { QUICK_ACTIONS, type QuickAction } from '@/lib/ai/prompts/tutor';
+import {
+  LINE_ACTION_LABELS,
+  type LineAction,
+  QUICK_ACTIONS,
+  type QuickAction,
+} from '@/lib/ai/prompts/tutor';
 import type { MessageRecord } from '@/lib/db/schema';
 import { languageLabel } from '@/lib/leetcode/editor';
 import { Markdown } from './Markdown';
@@ -48,7 +53,10 @@ export function MessageItem({ message, streamingText, onRetry, canRetry }: Messa
 }
 
 function UserMessage({ message }: { message: MessageRecord }) {
-  const action = message.action as QuickAction | undefined;
+  const actionLabel = message.action
+    ? (QUICK_ACTIONS[message.action as QuickAction]?.label ??
+      LINE_ACTION_LABELS[message.action as LineAction])
+    : undefined;
   return (
     <div className="flex flex-col items-end gap-1 animate-fade-in">
       <div className="max-w-[90%] whitespace-pre-wrap rounded-xl rounded-br-sm bg-elevated px-3 py-2 text-[13px] text-fg">
@@ -61,7 +69,7 @@ function UserMessage({ message }: { message: MessageRecord }) {
             {message.hintLevel === 4 ? 'Solution' : `Hint ${message.hintLevel}/4`}
           </Badge>
         )}
-        {action && QUICK_ACTIONS[action] && <Badge>{QUICK_ACTIONS[action].label}</Badge>}
+        {actionLabel && <Badge>{actionLabel}</Badge>}
         {message.code && (
           <Badge>
             <Code2 className="size-3" aria-hidden />

@@ -23,11 +23,36 @@ export const liveSnapshotSchema = z.object({
   truncated: z.boolean(),
 });
 
-/** Message the content script relays to the side panel. */
+/** The line (and word) the mouse rests on in the code editor. */
+export interface LiveHover {
+  /** 1-based. */
+  line: number;
+  lineText: string;
+  /** Identifier under the pointer, empty if none. */
+  word: string;
+}
+
+export const MAX_LINE_CHARS = 500;
+/** How long the pointer must rest on a line before it counts as a hover. */
+export const HOVER_DWELL_MS = 450;
+
+export const liveHoverSchema = z.object({
+  line: z.number().check(z.int(), z.minimum(1)),
+  lineText: z.string().check(z.maxLength(MAX_LINE_CHARS)),
+  word: z.string().check(z.maxLength(100)),
+});
+
+/** Messages the content script relays to the side panel. */
 export interface LiveCodeMessage {
   type: 'synora:live-code';
   slug: string;
   snapshot: LiveSnapshot;
+}
+
+export interface LiveHoverMessage {
+  type: 'synora:live-hover';
+  slug: string;
+  hover: LiveHover;
 }
 
 /**
@@ -35,13 +60,16 @@ export interface LiveCodeMessage {
  *
  * Subscribes to Monaco's change events (content, cursor/selection, model swap,
  * language switch) and posts a debounced snapshot to the window, where the
- * content script picks it up. No polling, no DOM mutation. Idempotent: a
- * second call re-emits instead of double-subscribing.
+ * content script picks it up. Also reports which line the mouse rests on
+ * (after a short dwell) for Line Insights. No polling, no DOM mutation.
+ * Idempotent: a second call re-emits instead of double-subscribing.
  */
 export function installMonacoWatcher(
   marker: string,
   maxChars: number,
   maxSelection: number,
+  hoverDwellMs = 450,
+  maxLineChars = 500,
 ): 'installed' | 'already-installed' | 'no-editor' {
   interface Disposable {
     dispose(): void;
@@ -54,6 +82,11 @@ export function installMonacoWatcher(
     getValueInRange(range: unknown): string;
     getLanguageId?(): string;
     isDisposed?(): boolean;
+    getLineContent?(line: number): string;
+    getWordAtPosition?(position: { lineNumber: number; column: number }): { word: string } | null;
+  }
+  interface MouseEvent {
+    target?: { position?: { lineNumber: number; column: number } | null } | null;
   }
   interface Editor {
     getModel(): Model | null;
@@ -64,6 +97,7 @@ export function installMonacoWatcher(
     onDidChangeCursorSelection(cb: () => void): Disposable;
     onDidChangeModel(cb: () => void): Disposable;
     onDidChangeModelLanguage?(cb: () => void): Disposable;
+    onMouseMove?(cb: (e: MouseEvent) => void): Disposable;
   }
   interface Watcher {
     emit(): void;
@@ -133,6 +167,34 @@ export function installMonacoWatcher(
     timer = setTimeout(emit, 300);
   };
 
+  // Hover: report the line under the pointer once it rests there briefly.
+  let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+  let lastHover = '';
+  const onMouseMove = (editor: Editor) => (e: MouseEvent) => {
+    const position = e.target?.position;
+    clearTimeout(hoverTimer);
+    if (!position) return;
+    hoverTimer = setTimeout(() => {
+      const model = editor.getModel();
+      if (!isCode(model) || !model.getLineContent) return;
+      const word = model.getWordAtPosition?.(position)?.word ?? '';
+      const key = `${position.lineNumber}:${word}`;
+      if (key === lastHover) return;
+      lastHover = key;
+      window.postMessage(
+        {
+          [marker]: true,
+          hover: {
+            line: position.lineNumber,
+            lineText: model.getLineContent(position.lineNumber).slice(0, maxLineChars),
+            word: word.slice(0, 100),
+          },
+        },
+        location.origin,
+      );
+    }, hoverDwellMs);
+  };
+
   const disposables: Disposable[] = [];
   const watched = new Set<Editor>();
   const watch = (editor: Editor) => {
@@ -145,6 +207,8 @@ export function installMonacoWatcher(
     );
     const languageSub = editor.onDidChangeModelLanguage?.(schedule);
     if (languageSub) disposables.push(languageSub);
+    const mouseSub = editor.onMouseMove?.(onMouseMove(editor));
+    if (mouseSub) disposables.push(mouseSub);
   };
   for (const editor of api.getEditors()) watch(editor);
   const created = api.onDidCreateEditor?.(watch);
@@ -157,6 +221,7 @@ export function installMonacoWatcher(
     },
     dispose: () => {
       clearTimeout(timer);
+      clearTimeout(hoverTimer);
       for (const d of disposables) d.dispose();
       delete win.__synoraWatcher;
     },

@@ -22,8 +22,8 @@ export type SendOptions = Pick<
   TurnInput,
   'display' | 'kind' | 'instruction' | 'hintLevel' | 'action'
 > & {
-  /** Force-include the selection even if code isn't attached. */
-  withSelection?: boolean;
+  /** Include the code (and selection) even if the attach toggle is off: the request is about the code. */
+  withCode?: boolean;
 };
 
 /** Everything the Coach UI needs for the current problem. */
@@ -105,15 +105,16 @@ export function useCoach(problem: Problem) {
   );
 
   const send = useCallback(
-    (options: SendOptions) => {
+    ({ withCode: force, ...options }: SendOptions) => {
       if (!conversationId) return Promise.resolve();
-      const withCode =
+      const attachedCode =
         attached ??
-        (options.withSelection && code
+        (force && code
           ? {
               code: code.code,
               languageId: code.languageId,
               source: code.source,
+              cursorLine: code.cursorLine,
               selection: code.selection,
             }
           : undefined);
@@ -122,7 +123,7 @@ export function useCoach(problem: Problem) {
           conversationId,
           problem,
           level: settings.experienceLevel,
-          code: withCode,
+          code: attachedCode,
           signal,
           ...options,
           ...callbacks,

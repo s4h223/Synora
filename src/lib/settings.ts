@@ -29,6 +29,8 @@ export const settingsSchema = z.object({
   codeAccess: codeAccessSchema,
   experienceLevel: experienceLevelSchema,
   pairMode: pairModeSchema,
+  /** Show the Line Insight card for the hovered/cursor line (Live code access only). */
+  lineInsights: z.boolean(),
   /** Record learning events (problem opened, hints, …) locally for Progress. */
   sessionTracking: z.boolean(),
   onboardingComplete: z.boolean(),
@@ -39,6 +41,7 @@ export const DEFAULT_SETTINGS: Settings = {
   codeAccess: 'ask',
   experienceLevel: 'intermediate',
   pairMode: 'off',
+  lineInsights: true,
   sessionTracking: true,
   onboardingComplete: false,
 };

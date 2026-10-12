@@ -11,7 +11,7 @@ _Last updated: 2026-10-12_
 | 0. Scaffold | WXT + React + TS strict + Tailwind v4, Biome, Vitest, CI, docs | ✅ |
 | 1. Foundation | Design system, side panel shell, LeetCode detection, code reading + paste fallback, local DB, mic-permission spike | ✅ detection verified live · 🧪 rest |
 | 2. AI Coach | Provider adapters, streaming chat, hint ladder, live code mirroring, Pair mode, beginner mode, onboarding | 🧪 |
-| 2b. Line Insights | Hover/cursor-aware help for the line you're on | 🚧 |
+| 2b. Line Insights | Hover/cursor-aware help for the line you're on | 🧪 |
 | 3. Challenge Engine | Pyodide runtime, harness, curated problem packs, verified failures, predictions | ⏳ |
 | 4. Learning + Progress | Mistake tracking, recurring patterns, dashboard, Independence Score | ⏳ |
 | _v0.1 release_ | | |
@@ -62,6 +62,19 @@ Automated: typecheck, lint, 151 unit tests, build. **Not yet verified against a 
 | Persistent conversations per problem; "New conversation" | 🧪 | |
 | Onboarding (level, code access, AI choice) | 🧪 | |
 | Prompt-injection guards (delimited data, escaped tags, unforgeable app instructions) | 🧪 | |
+
+## Phase 2b: Line Insights
+
+Automated: 191 unit tests total. **Hover tracking not yet verified in the live LeetCode editor.**
+
+| Feature | Status | Notes |
+|---|---|---|
+| Hover (450 ms dwell) and cursor-line focus from Monaco | 🧪 | Uses `onMouseMove` + `getWordAtPosition` |
+| Offline reference: ~60 entries for Python, Java, C++, JS/TS built-ins with cost and gotchas | 🧪 | Curated; no AI |
+| High-precision pitfall rules (9) with false-positive tests | 🧪 | |
+| Line-scoped questions: purpose, trace, risks, explain every part | 🧪 | |
+| "Explain it back" with Socratic feedback | 🧪 | |
+| Pin / collapse; setting to turn off | 🧪 | |
 
 ## Known limitations
 

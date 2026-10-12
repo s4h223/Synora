@@ -198,3 +198,60 @@ export function escapeTag(content: string, tag: string): string {
 function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max)}\n…[truncated]` : text;
 }
+
+export type LineAction =
+  | 'line-purpose'
+  | 'line-trace'
+  | 'line-risk'
+  | 'line-basics'
+  | 'line-explain-back';
+
+export const LINE_ACTION_LABELS: Record<LineAction, string> = {
+  'line-purpose': 'What does this line do?',
+  'line-trace': 'Trace it',
+  'line-risk': 'What could go wrong?',
+  'line-basics': 'Explain every part',
+  'line-explain-back': 'My explanation',
+};
+
+/**
+ * Questions about a single line. Designed from learning research: explain a
+ * line's role in context (students find that more useful than literal
+ * restatements), trace concrete values (builds an accurate model of what the
+ * computer does), and give Socratic feedback on the student's own explanation.
+ */
+export function lineActionPrompt(
+  action: LineAction,
+  line: number,
+  lineText: string,
+  studentExplanation = '',
+): { display: string; instruction: string } {
+  const quoted = `line ${line} (\`${escapeTag(lineText.trim(), 'synora').slice(0, 200)}\`)`;
+  switch (action) {
+    case 'line-purpose':
+      return {
+        display: `What does line ${line} do here?`,
+        instruction: `Explain the role of ${quoted} in their solution: what it accomplishes and why it is needed, not a word-by-word restatement. 2–4 sentences. If it looks wrong, say so gently and ask a guiding question instead of fixing it.`,
+      };
+    case 'line-trace':
+      return {
+        display: `Trace line ${line} with an example.`,
+        instruction: `Using the first example input, show the values of the variables involved just before and just after ${quoted} runs, for the first two or three times it runs if it is inside a loop. Use a small table. Point out anything surprising.`,
+      };
+    case 'line-risk':
+      return {
+        display: `What could go wrong on line ${line}?`,
+        instruction: `Name concrete inputs that respect the problem's constraints where ${quoted} could fail or behave unexpectedly (empty input, one element, duplicates, negatives, overflow, off-by-one). If it is fine, say briefly why. Do not rewrite it.`,
+      };
+    case 'line-basics':
+      return {
+        display: `Explain every part of line ${line}.`,
+        instruction: `Explain every part of ${quoted} in plain words (keywords, functions, operators, punctuation) as if to someone new to programming, then one sentence on why it matters in this solution.`,
+      };
+    case 'line-explain-back':
+      return {
+        display: studentExplanation,
+        instruction: `The student is explaining ${quoted} in their own words (their message below). Give feedback like a patient tutor: say what they got right, gently point out anything missing or incorrect, and ask one question that deepens their understanding. Don't replace their explanation with a full one unless they are clearly lost.`,
+      };
+  }
+}
