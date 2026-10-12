@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Synora · Microphone access</title>
+  </head>
+  <body>
+    <main class="mx-auto flex min-h-full max-w-md flex-col justify-center gap-4 p-8">
+      <h1 class="font-semibold text-fg text-xl tracking-tight">Enable microphone for Synora Live</h1>
+      <p class="text-fg-secondary">
+        Chrome can't show the microphone prompt inside the side panel, so Synora asks here once.
+        Synora only listens while the Live microphone button is active, and never stores audio.
+      </p>
+      <button
+        id="request"
+        type="button"
+        class="inline-flex h-9 w-fit items-center rounded-md bg-accent px-4 font-medium text-accent-fg hover:bg-accent-hover"
+      >
+        Allow microphone
+      </button>
+      <p id="status" role="status" aria-live="polite" class="text-fg-secondary"></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

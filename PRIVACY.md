@@ -24,9 +24,15 @@ Synora runs challenge code **locally** in your browser; it is never uploaded for
 
 Some free-tier AI providers may use submitted data, including code, to improve their models. Check your provider's terms.
 
+## How Synora reads LeetCode
+
+- A small script is present on `leetcode.com` pages (except contests) so Synora notices when you open a problem. It only reads content on `/problems/*` pages, and only when the side panel asks.
+- Problem details (title, description, tags) are fetched from LeetCode's own API, from within the LeetCode page.
+- Your editor code is read only according to your **Editor code access** setting (default: only when you click "Read from editor").
+
 ## What Synora never does
 
-- Read pages other than `leetcode.com/problems/*`
+- Read pages outside `leetcode.com`
 - Run on LeetCode contest pages
 - Track your browsing
 - Store raw audio
