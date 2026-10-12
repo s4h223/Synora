@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Synora</title>
+  <rect width="512" height="512" rx="112" fill="#12141C"/>
+  <rect x="8" y="8" width="496" height="496" rx="106" fill="none" stroke="#2A2D3A" stroke-width="16"/>
+  <path d="M256 96 C 272 196 316 240 416 256 C 316 272 272 316 256 416 C 240 316 196 272 96 256 C 196 240 240 196 256 96 Z" fill="#A78BFA"/>
+  <circle cx="256" cy="256" r="34" fill="#12141C"/>
+</svg>

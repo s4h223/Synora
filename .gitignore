@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# WXT build output and generated files
+.output/
+.wxt/
+web-ext.config.ts
+stats.html
+stats-*.json
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editors & OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
