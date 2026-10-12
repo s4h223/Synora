@@ -120,3 +120,96 @@
     }
   }
 }
+
+/* Chat prose: compact typography for the narrow side panel. */
+@layer components {
+  .synora-prose {
+    color: var(--color-fg);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .synora-prose > * + * {
+    margin-top: 0.6em;
+  }
+  .synora-prose h1,
+  .synora-prose h2,
+  .synora-prose h3 {
+    font-weight: 600;
+    font-size: 13.5px;
+    margin-top: 1em;
+  }
+  .synora-prose ul,
+  .synora-prose ol {
+    padding-left: 1.2em;
+  }
+  .synora-prose ul {
+    list-style: disc;
+  }
+  .synora-prose ol {
+    list-style: decimal;
+  }
+  .synora-prose li + li {
+    margin-top: 0.25em;
+  }
+  .synora-prose li::marker {
+    color: var(--color-fg-muted);
+  }
+  .synora-prose strong {
+    font-weight: 600;
+  }
+  .synora-prose blockquote {
+    border-left: 2px solid var(--color-border);
+    padding-left: 0.75em;
+    color: var(--color-fg-secondary);
+  }
+  .synora-prose table {
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .synora-prose th,
+  .synora-prose td {
+    border: 1px solid var(--color-border);
+    padding: 0.25em 0.5em;
+    text-align: left;
+  }
+  .synora-prose pre code {
+    background: none;
+    padding: 0;
+  }
+}
+
+/* Syntax highlighting: restrained palette, accent for keywords. */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-meta .hljs-keyword {
+  color: var(--color-accent);
+}
+.hljs-string,
+.hljs-regexp {
+  color: #86efac;
+}
+.hljs-number,
+.hljs-literal {
+  color: #fcd34d;
+}
+.hljs-comment {
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+.hljs-title,
+.hljs-title.function_ {
+  color: #7dd3fc;
+}
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_ {
+  color: #f0abfc;
+}
+.hljs-params,
+.hljs-variable {
+  color: var(--color-fg);
+}
+.hljs-meta {
+  color: var(--color-fg-secondary);
+}

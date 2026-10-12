@@ -1,12 +1,10 @@
 import { AudioLines, BarChart3, type LucideIcon, MessageSquareText, Swords } from 'lucide-react';
 import { Tabs } from 'radix-ui';
-import { useState } from 'react';
 import { ChallengeTab } from '../challenge/ChallengeTab';
 import { CoachTab } from '../coach/CoachTab';
 import { LiveTab } from '../live/LiveTab';
 import { ProgressTab } from '../progress/ProgressTab';
-
-type TabId = 'coach' | 'live' | 'challenge' | 'progress';
+import { type TabId, useUiStore } from './ui-store';
 
 const TABS: { id: TabId; label: string; icon: LucideIcon; Panel: () => React.JSX.Element }[] = [
   { id: 'coach', label: 'Coach', icon: MessageSquareText, Panel: CoachTab },
@@ -16,7 +14,8 @@ const TABS: { id: TabId; label: string; icon: LucideIcon; Panel: () => React.JSX
 ];
 
 export function MainTabs() {
-  const [tab, setTab] = useState<TabId>('coach');
+  const tab = useUiStore((s) => s.tab);
+  const setTab = useUiStore((s) => s.setTab);
 
   return (
     <Tabs.Root

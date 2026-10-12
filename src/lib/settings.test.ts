@@ -18,14 +18,25 @@ describe('settings', () => {
   });
 
   it('fills in missing fields from defaults', () => {
-    expect(sanitizeSettings({ codeAccess: 'auto' })).toEqual({
+    expect(sanitizeSettings({ codeAccess: 'live', pairMode: 'quiet' })).toEqual({
       ...DEFAULT_SETTINGS,
-      codeAccess: 'auto',
+      codeAccess: 'live',
+      pairMode: 'quiet',
+    });
+  });
+
+  it('migrates the Phase 1 "auto" code access to "live"', () => {
+    expect(sanitizeSettings({ codeAccess: 'auto' }).codeAccess).toBe('live');
+  });
+
+  it('drops invalid fields individually and keeps valid ones', () => {
+    expect(sanitizeSettings({ codeAccess: 'always', experienceLevel: 'beginner' })).toEqual({
+      ...DEFAULT_SETTINGS,
+      experienceLevel: 'beginner',
     });
   });
 
   it('falls back to defaults on invalid stored data', () => {
-    expect(sanitizeSettings({ codeAccess: 'always' })).toEqual(DEFAULT_SETTINGS);
     expect(sanitizeSettings('garbage')).toEqual(DEFAULT_SETTINGS);
     expect(sanitizeSettings(null)).toEqual(DEFAULT_SETTINGS);
   });

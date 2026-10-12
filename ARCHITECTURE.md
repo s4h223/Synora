@@ -74,6 +74,20 @@ No `tabs`, `webNavigation`, `history` or `<all_urls>`. AI provider hosts will be
 ### Bundle size
 Validation uses `zod/mini` (tree-shakeable), which took the content script from 88 kB to 25 kB.
 
+### AI layer (`src/lib/ai`)
+
+- `AiProvider` interface: `streamChat(request, handlers)` + optional `listModels()`.
+- **Anthropic** uses the official `@anthropic-ai/sdk`, dynamically imported, with `dangerouslyAllowBrowser` (the key is the user's own). Requests cache the system prompt (`cache_control`), set `output_config.effort: "medium"` on Claude 5-family models, and opt into server-side refusal fallbacks (`fallbacks: "default"`) where supported. A fallback mid-stream resets the partial text.
+- **OpenAI-compatible** is a small fetch + SSE adapter (`sse.ts`).
+- Keys live in `chrome.storage.local` (`local:ai-config`), never synced. Each provider's host is an optional permission requested on "Save & test".
+- **Prompts** (`prompts/tutor.ts`): the system prompt holds stable instructions + the problem (cacheable). Each user turn carries `<synora>` app instructions (hint level, quick action), line-numbered `<student_code>`, an optional `<selection>`, then the student's text. Students can't forge `<synora>` tags; data can't close its own tags.
+- **History** keeps code only in the last two user turns and fits a character budget.
+
+### Live code + Pair mode
+
+- With code access set to **Live**, the side panel injects a MAIN-world watcher that subscribes to Monaco's content/cursor/model events and posts debounced snapshots (code, language, cursor line, selection). The content script validates and relays them to the panel. Nothing is polled; nothing leaves the browser until an AI request.
+- **Pair mode** (`quiet` / `active`) runs a one-shot check when the student pauses (5–8 s), at most every 30–60 s, only if the code changed meaningfully since the last check and differs from LeetCode's starter template. The model must answer with a small JSON verdict; silence is the expected default. Policy logic is pure (`pair-trigger.ts`).
+
 ### Verified vs. unverified
 Challenge results carry one of three labels: **verified failure** (executed and compared against a trusted reference), **candidate test**, or **reasoning challenge**. Expected outputs come only from curated reference solutions, never from an AI model.
 

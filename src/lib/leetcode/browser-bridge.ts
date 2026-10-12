@@ -1,6 +1,13 @@
 import { z } from 'zod/mini';
 import type { ProblemResolverDeps } from './active-problem';
 import { type EditorReadResult, MAX_CODE_CHARS, readMonacoInPage } from './editor';
+import {
+  installMonacoWatcher,
+  LIVE_MARKER,
+  MAX_SELECTION_CHARS,
+  revealLineInPage,
+  uninstallMonacoWatcher,
+} from './live-sync';
 import type { GetProblemResponse } from './types';
 
 /** Path WXT emits for `entrypoints/leetcode.content.ts`. */
@@ -44,5 +51,52 @@ export async function readEditorCode(tabId: number): Promise<EditorReadResult> {
       reason: 'injection-failed',
       message: error instanceof Error ? error.message : String(error),
     };
+  }
+}
+
+export type LiveSyncStatus = 'installed' | 'already-installed' | 'no-editor' | 'failed';
+
+/** Start mirroring the editor. Only call when the user has chosen Live code access. */
+export async function startLiveSync(tabId: number): Promise<LiveSyncStatus> {
+  try {
+    const [injection] = await browser.scripting.executeScript({
+      target: { tabId },
+      world: 'MAIN',
+      func: installMonacoWatcher,
+      args: [LIVE_MARKER, MAX_CODE_CHARS, MAX_SELECTION_CHARS],
+    });
+    const status = injection?.result;
+    return status === 'installed' || status === 'already-installed' || status === 'no-editor'
+      ? status
+      : 'failed';
+  } catch {
+    return 'failed';
+  }
+}
+
+export async function stopLiveSync(tabId: number): Promise<void> {
+  try {
+    await browser.scripting.executeScript({
+      target: { tabId },
+      world: 'MAIN',
+      func: uninstallMonacoWatcher,
+    });
+  } catch {
+    // Tab closed or navigated away: nothing to clean up.
+  }
+}
+
+/** Scroll the LeetCode editor to a line and select it. */
+export async function revealLine(tabId: number, line: number): Promise<boolean> {
+  try {
+    const [injection] = await browser.scripting.executeScript({
+      target: { tabId },
+      world: 'MAIN',
+      func: revealLineInPage,
+      args: [line],
+    });
+    return injection?.result === true;
+  } catch {
+    return false;
   }
 }

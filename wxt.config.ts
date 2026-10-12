@@ -22,6 +22,9 @@ export default defineConfig({
     // - leetcode.com: problem data, tab URL for problem detection
     permissions: ['sidePanel', 'storage', 'scripting'],
     host_permissions: ['https://leetcode.com/*'],
+    // Requested one origin at a time, only when the user configures that AI provider.
+    // Plain http is limited to local model servers (Ollama, LM Studio).
+    optional_host_permissions: ['https://*/*', 'http://localhost/*', 'http://127.0.0.1/*'],
     action: {
       default_title: 'Open Synora',
     },

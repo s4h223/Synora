@@ -1,25 +1,44 @@
 import { extractProblemFromDom } from '@/lib/leetcode/dom';
 import { fetchQuestion, LeetCodeApiError, readCsrfToken } from '@/lib/leetcode/graphql';
+import { LIVE_MARKER, type LiveCodeMessage, liveSnapshotSchema } from '@/lib/leetcode/live-sync';
 import type { ContentRequest, GetProblemResponse, Problem } from '@/lib/leetcode/types';
 import { classifyUrl } from '@/lib/leetcode/url';
 
 /**
- * Deliberately tiny: no observers, no polling, no DOM mutation. It only answers
- * requests from the side panel. Navigation is tracked by the side panel through
- * chrome.tabs events, so this script does nothing until asked.
+ * Deliberately tiny: no observers, no polling, no DOM mutation. It answers
+ * problem requests from the side panel and relays live-code snapshots posted by
+ * the MAIN-world editor watcher (only installed when the user enables Live).
  */
 export default defineContentScript({
   matches: ['https://leetcode.com/*'],
   // Never active on contest pages.
   excludeMatches: ['https://leetcode.com/contest/*'],
   runAt: 'document_idle',
-  main() {
+  main(ctx) {
     const cache = new Map<string, Problem>();
 
     browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
       if (!isContentRequest(message)) return false;
       getProblem(cache).then(sendResponse);
       return true; // keep the channel open for the async response
+    });
+
+    ctx.addEventListener(window, 'message', (event: MessageEvent) => {
+      if (event.source !== window || event.origin !== location.origin) return;
+      const data = event.data as Record<string, unknown> | null;
+      if (data?.[LIVE_MARKER] !== true) return;
+
+      const info = classifyUrl(location.href);
+      const parsed = liveSnapshotSchema.safeParse(data.snapshot);
+      if (info.kind !== 'problem' || !parsed.success) return;
+
+      const message: LiveCodeMessage = {
+        type: 'synora:live-code',
+        slug: info.slug,
+        snapshot: parsed.data,
+      };
+      // Rejects when the side panel is closed; that's fine.
+      browser.runtime.sendMessage(message).catch(() => {});
     });
   },
 });
